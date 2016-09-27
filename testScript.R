@@ -14,7 +14,7 @@ sparrowNetwork <- sparrowNetwork[,-1]
 bar<-synGetActivity(sparrowNetworkObj)
 source('grabCRANIOData.R')
 
-baz <- read.csv('cranioRNAseq.csv',stringsAsFactors=F)
+baz <- read.csv('cranioRNAseq.csv',stringsAsFactors=F,row.names=1)
 S <- cor(baz)
 foo <- data.matrix(sparrowNetwork)[which(upper.tri(data.matrix(sparrowNetwork)))]
 thresVal <- sort(foo^2,decreasing=T)[4e4]
@@ -33,4 +33,4 @@ library(dplyr)
 edgeList <- arrange(edgeList,desc(weight))
 
 source('covarianceSelectionBisection.R')
-ggm <- covarianceSelectionBisection(S,rankedEdges=edgeList[,1:2],numberObservations=nrow(baz)*ncol(baz),lowerBoundEdge=1e4,upperBoundEdge=4e4)
+ggm <- covarianceSelectionBisection(S,rankedEdges=edgeList[,1:2],numberObservations=nrow(baz)*ncol(baz),lowerBoundEdge=1,upperBoundEdge=4e4)
