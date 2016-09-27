@@ -1,4 +1,7 @@
 #grab genetic data
+#pkg <- c("package:IRanges","package:XML","package:digest","package:bitops","package:DBI","package:stats4","package:RSQLite","package:S4Vectors","package:rjson","package:tools","package:Biobase","package:RCurl","package:parallel","package:BiocGenerics","package:AnnotationDbi","package:biomaRt")
+#lapply(pkg, detach, character.only = TRUE, unload = TRUE,force=TRUE)
+
 
 library(synapseClient)
 synapseLogin()
@@ -28,7 +31,7 @@ for (i in 1:ncol(esp6500individual)){
   }
 }
 
-w1 <- which(p.adjust(esp6500$p.value,method = 'BH')<=1)
+w1 <- which(p.adjust(esp6500$p.value,method = 'BH')<=0.05)
 geneList <- esp6500$Gene.refGene[w1]
 
 cranioModsObj <- synGet('syn5700963')
@@ -36,11 +39,16 @@ cranioMods <- read.delim(cranioModsObj@filePath,stringsAsFactors=F)
 ensembl=biomaRt::useMart('ENSEMBL_MART_ENSEMBL',
                          dataset = 'hsapiens_gene_ensembl',
                          host='www.ensembl.org')
-
+library(biomaRt)
 genes<-getBM(attributes = c('ensembl_gene_id','external_gene_name'),
              filters='ensembl_gene_id',
              values=cranioMods$GeneIDs,
              mart=ensembl)
+
+#genes<-getBM(attributes = c('ensembl_gene_id','external_gene_name'),
+#             filters='ensembl_gene_id',
+#             values=n1,
+#             mart=ensembl)
 
 cranioMods2 <- merge(cranioMods,
                      genes,
@@ -48,15 +56,34 @@ cranioMods2 <- merge(cranioMods,
                      by.y='ensembl_gene_id')
 
 keep20 <-names(which(table(cranioMods2$modulelabels)>20))
-cranioMods2 <- filter(cranioMods2,modulelabels%in%keep20)
+cranioMods2 <- dplyr::filter(cranioMods2,modulelabels%in%keep20)
 
-modList <- sapply(unique(cranioMods2$modulelabels),utilityFunctions::listify,cranioMods2$external_gene_name,cranioMods2$modulelabels)
+modList <- sapply(unique(cranioMods2$modulelabels),
+                  utilityFunctions::listify,
+                  cranioMods2$external_gene_name,
+                  cranioMods2$modulelabels)
+
+
 names(modList) <- unique(cranioMods2$modulelabels)
 
 pvals<-sapply(modList,utilityFunctions::fisherWrapperPval,geneList,genes$external_gene_name)
 ors <- sapply(modList,utilityFunctions::fisherWrapperOR,geneList,genes$external_gene_name)
 
 exprMat <- read.csv('cranioRNAseq.csv',stringsAsFactors=F)
+
+
+
+#################################SKAT ANALYSES
+
+
+####merge expression sets and genotype sets
+
+
+
+
+
+
+
 greenGene <- filter(cranioMods2,modulelabels=='green')$GeneIDs
 greenCranio <- exprMat[,greenGene]
 baz <- hclust(dist(t(scale(greenCranio))))
@@ -69,3 +96,13 @@ greenModList <- sapply(unique(newMatrix$subModule),utilityFunctions::listify,new
 
 pvals2<-sapply(greenModList,utilityFunctions::fisherWrapperPval,geneList,genes$external_gene_name)
 ors2 <- sapply(greenModList,utilityFunctions::fisherWrapperOR,geneList,genes$external_gene_name)
+
+
+greenModAnnoObj <- synGet('syn5758862')
+greenModAnno <- read.delim(greenModAnnoObj@filePath,sep='\t',stringsAsFactors=F)
+
+genesInGeneList <- genes$external_gene_name%in%geneList
+genes2 <- cbind(genes,genesInGeneList)
+genes2 <- filter(genes2,ensembl_gene_id%in%greenGene)
+write.csv(genes2,file='greenanno2.csv',quote=F)
+write.csv(newMatrix,file='submodules.csv',quote=F)
