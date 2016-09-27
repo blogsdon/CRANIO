@@ -87,3 +87,30 @@ library(SKAT)
 ######write utility funciton to extract genotypes for a gene set and a set of filters
 ######
 
+####first type of filter: grab all variants for a set of genes.
+library(dplyr)
+getGeneSetVariantDataFrame = function(geneSet,genotypeMatrix,variantAnnotation){
+  variants = dplyr::filter(variantAnnotation, Gene.refGene%in%geneSet) %>%
+    dplyr::select(genoIdentifiers)
+  return(variants)
+}
+
+
+#####analyses to be run
+###1) gene (snp) to gene via SKAT-O at MAF, CADD, GERP filters
+###2) gene (snp) x mod to gene via SKAT-O at MAF, CADD, GERP filters
+###3) gene (snp) x mod to gene x mod via SKAT-O at MAF, CADD, GERP filters
+
+foo3 = dplyr::filter(foo2,CADD_raw > 10)
+foobar2=getGeneSetVariantDataFrame(test1,genotypeMatrix,foo3)
+
+
+bar10=genotypeMatrix[,foobar2$genoIdentifiers]
+bar23 = rowSums(bar10)
+test1=modList[[1]]
+
+map234 = genes$ensembl_gene_id
+names(map234) = genes$external_gene_name
+greenModExpr = exprMat[,map234[test1]]
+eigenGenes = svd(scale(greenModExpr))
+summary(lm(bar23 ~ eigenGenes$u[,1:4]))
