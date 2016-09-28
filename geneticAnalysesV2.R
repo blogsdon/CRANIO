@@ -54,6 +54,11 @@ View(foo2)
 
 
 #download gene expression data
+
+#exprMatObj = synGet('syn7300582')
+#exprMat = read.delim(exprMatObj@filePath,stringsAsFactors=F)
+
+
 exprMat <- read.csv('cranioRNAseq.csv',stringsAsFactors=F)
 
 
@@ -87,6 +92,10 @@ library(SKAT)
 ######write utility funciton to extract genotypes for a gene set and a set of filters
 ######
 
+
+
+
+
 ####first type of filter: grab all variants for a set of genes.
 library(dplyr)
 getGeneSetVariantDataFrame = function(geneSet,genotypeMatrix,variantAnnotation){
@@ -97,9 +106,34 @@ getGeneSetVariantDataFrame = function(geneSet,genotypeMatrix,variantAnnotation){
 
 
 #####analyses to be run
-###1) gene (snp) to gene via SKAT-O at MAF, CADD, GERP filters
-###2) gene (snp) x mod to gene via SKAT-O at MAF, CADD, GERP filters
-###3) gene (snp) x mod to gene x mod via SKAT-O at MAF, CADD, GERP filters
+###1) Control vs CASE
+###2) gene (snp) to gene via SKAT-O at CADD filters
+###3) gene (snp) x mod to gene via SKAT-O at CADD filters
+###4) gene (snp) x mod to gene x mod via SKAT-O at CADD filters
+
+
+###cadd 
+caddRaw = foo2$CADD_raw %>%as.numeric
+caddThresholds = quantile(caddRaw,na.rm=T,c(.8,.9,.95,.99))
+
+fxn1 = function(threshold,
+                genotypeMatrix,
+                annotationMatrix){
+  
+  variants = dplyr::filter(annotationMatrix, CADD_raw>threshold) %>%
+    dplyr::select(genoIdentifiers)
+  return(genotypeMatrix[,variants$genoIdentifiers])
+  
+}
+
+filteredGenotypes = lapply(caddThresholds,fxn1,genotypeMatrix,foo2)
+
+###gene by gene analysis
+
+
+
+
+
 
 foo3 = dplyr::filter(foo2,CADD_raw > 10)
 foobar2=getGeneSetVariantDataFrame(test1,genotypeMatrix,foo3)
