@@ -69,8 +69,12 @@ library(dplyr)
 
 #fileNames <- paste0('Scaled_Winsorized_',foo$name)
 fileNames <- sapply(bar,function(x){return(paste0('scaled and winsorized ',x@properties$name))})
+fileNames2 <- gsub(' ','_',fileNames)
+fileNames2 <- gsub(',','',fileNames2)
+fileNames2 <- gsub('\\(','',fileNames2)
+fileNames2 <- gsub('\\)','',fileNames2)
 parentIds <- sapply(bar,function(x){return(x@properties$parentId)})
-annotations <- sapply(bar,function(x){return(synGetAnnotations(x))})
+annotations <- lapply(bar,function(x){return(synGetAnnotations(x))})
 comments <- rep('Winsorizing and scaling',2)
 useds <- sapply(bar,function(x){return(x@properties$id)})
 
