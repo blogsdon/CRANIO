@@ -68,7 +68,7 @@ reformattedData <- lapply(listOfData2,winsorizeAndScale)
 library(dplyr)
 
 #fileNames <- paste0('Scaled_Winsorized_',foo$name)
-fileNames <- sapply(bar,function(x){return(paste0('scaled and winsorized ',x@properties$name))})
+fileNames <- sapply(bar,function(x){return(paste0('scaled and winsorized ',x@properties$name,'.csv'))})
 fileNames2 <- gsub(' ','_',fileNames)
 fileNames2 <- gsub(',','',fileNames2)
 fileNames2 <- gsub('\\(','',fileNames2)
@@ -102,7 +102,7 @@ activityDescriptions <- rep('Transpose, Winsorize, set Nas to mean, then Scale e
 #push back to synapse
 synObjs<-mapply(rSynapseUtilities::pushToSynapseWrapper,
                 df=reformattedData,
-                fileName=fileNames,
+                fileName=fileNames2,
                 synapseFolderId=parentIds,
                 annos=annotations,
                 comment=comments,
